@@ -1,0 +1,81 @@
+\documentclass[english]{article}
+\newcommand{\code}{\emph}
+\newcommand{\pkg}{\textsl}
+\title{Time Series Database Interface: TSgetSymbol wrapper to getSymbols}
+\begin{document}
+\maketitle
+%\VignetteIndexEntry{TSgetSymbol Guide}
+\SweaveOpts{eval=TRUE,echo=TRUE,results=hide,fig=FALSE}
+%\SweaveOpts{eval=TRUE,echo=TRUE,results=verbatim,fig=TRUE}
+\begin{Scode}{echo=FALSE,results=hide}
+ options(continue="  ")
+\end{Scode}
+
+\section{Introduction}
+The code from the vignette that generates this guide can 
+be loaded into an editor with \emph{edit(vignette("TSgetSymbol"))}.
+This uses the default editor, which can be changed using \emph{options()}.
+It should be possible to view the pdf version of the guide for this 
+package with \emph{print(vignette("TSgetSymbol"))}.
+
+Once R is started, the functions in this package are made available with
+
+\begin{Scode}
+library("TSgetSymbol")  
+\end{Scode}
+This will also load required packages \pkg{TSdbi}, \pkg{DBI}, 
+\pkg{methods}, \pkg{tframePlus}, \pkg{zoo}, and \pkg{quantmod}.
+
+\pkg{TSgetSymbol} is just a wrapper to \code{getSymbols} in \pkg{quantmod}. 
+It does not provide
+extra functionality, only an interface that is consistent with \pkg{TSdbi}.
+\pkg{TSgetSymbol} does not support writing data.
+
+\subsection{Examples  Using TSgetSymbol with FRED}
+
+\begin{Scode}{results=verbatim}
+  con <- TSconnect("getSymbol", dbname="FRED") 
+  x <- TSget("M2", con)
+  plot(x)
+  tfplot(x)
+  TSrefperiod(x) 
+  TSdescription(x) 
+\end{Scode}
+
+It is also possible to specify a connection to be used as the default:
+
+\begin{Scode}{results=verbatim}
+  options(TSconnection=con)
+  tfplot(TSget(serIDs="M2"))
+\end{Scode}
+
+\begin{Scode}{results=verbatim}
+  x2 <- TSget("CPIAUCNS", con)
+  tfplot(x2)
+  plot(x2)
+  TSdescription(x2) 
+\end{Scode}
+
+\begin{Scode}{results=verbatim}
+  x <- TSget(c("CPIAUCNS","M2"), con)
+  plot(x)
+  tfplot(x)
+  TSdescription(x) 
+\end{Scode}
+
+\begin{Scode}{results=verbatim}
+  TSdates(c("CPIAUCNS","M2"), con) # note default start
+\end{Scode}
+
+The folowing connects to yahoo and loads Ford. 
+This is a multivariate time series with open, close, etc.
+
+\begin{Scode}{results=verbatim}
+  yahoo <- TSconnect("getSymbol", dbname="yahoo") 
+  x <- TSget("F", con=yahoo)
+  plot(x)
+  tfplot(x)
+\end{Scode}
+
+See the \pkg{TSdbi} vignette for additional details.
+\end{document}
