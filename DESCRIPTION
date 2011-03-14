@@ -1,6 +1,6 @@
 Package: TSgetSymbol
-Version: 2010.12-1
-Date: 2010-12-20
+Version: 2011.3-1
+Date: 2011-03-14
 Title: Time Series Database Interface extension to connect with
         getSymbols
 Description: Provides methods for generics in the TSdbi package to
@@ -16,6 +16,6 @@ Maintainer: Paul Gilbert <pgilbert@bank-banque-canada.ca>
 URL: http://www.bank-banque-canada.ca/pgilbert
 Repository: CRAN
 Repository/R-Forge/Project: tsdbi
-Repository/R-Forge/Revision: 199
-Date/Publication: 2010-12-22 08:57:38
-Packaged: 2010-12-19 21:43:37 UTC; rforge
+Repository/R-Forge/Revision: 233
+Date/Publication: 2011-03-23 09:29:34
+Packaged: 2011-03-15 21:42:38 UTC; rforge
