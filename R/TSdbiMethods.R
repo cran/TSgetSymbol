@@ -1,11 +1,3 @@
-#.onLoad  <- function(library, section) {
-#  ok <- require("methods")
-#  ok <- ok & require("DBI") # this seems to be needed for dbConnect (not just namespace)
-#  ok <- ok & require("TSdbi")
-#  ok <- ok & require("tseries")
-#  ok <- ok & require("tframePlus")
-#  invisible(ok)
-#  }
 
 setClass("getSymbolDriver", representation("DBIDriver", Id = "character")) 
 
@@ -37,10 +29,12 @@ setMethod("TSconnect",   signature(drv="getSymbolDriver", dbname="character"),
       #close(con)
       }
    else if (dbname == "yahoo") {
-      con <- try(quantmod:::getSymbols('QQQQ',src='yahoo'), silent = TRUE)
-      if(inherits(con, "try-error")) 
-         stop("Could not establish TSgetSymbolConnection to ",  dbname)
-      #close(con)
+      #this breaks if the symbol disappears, so it is more trouble than value
+      # a better test would be good
+      #con <- try(quantmod:::getSymbols('QQQQ',src='yahoo'), silent = TRUE)
+      #if(inherits(con, "try-error")) 
+      #   stop("Could not establish TSgetSymbolConnection to ",  dbname)
+      ##close(con)
       }
    else 
       warning(dbname, "not recognized. Connection assumed working, but not tested.")
@@ -127,11 +121,11 @@ setMethod("TSget",     signature(serIDs="character", con="TSgetSymbolConnection"
     st <- as.POSIXlt(start(mat)) #POSIXlt as return for zoo
     if (TSrepresentation  %in% c( "ts", "default")) {
         if(periodicity(mat)$scale == "monthly")
-	   mat <- as.ts(mat, frequency=12,start=c(1900+st$year, 1+st$mon))
+	   mat <- ts(mat, frequency=12,start=c(1900+st$year, 1+st$mon))
         else if(periodicity(mat)$scale == "quarterly")
-	   mat <- as.ts(mat, frequency=4, start=c(1900+st$year, 1+(st$mon-1)/3))
+	   mat <- ts(mat, frequency=4, start=c(1900+st$year, 1+(st$mon-1)/3))
         else if(periodicity(mat)$scale == "yearly")  
-	   mat <- as.ts(mat, frequency=1, start=c(1900+st$year, 1))
+	   mat <- ts(mat, frequency=1, start=c(1900+st$year, 1))
 	}
     mat <- tfwindow(mat, tf=tf, start=start, end=end)
     
@@ -146,7 +140,11 @@ setMethod("TSget",     signature(serIDs="character", con="TSgetSymbolConnection"
   	conType=class(con), DateStamp= Sys.time(), 
 	TSdoc=paste(desc, " from ", con@dbname, "retrieved ", Sys.time()),
 	TSdescription=paste(desc, " from ", con@dbname),
-	TSlabel=desc) 
+	TSlabel=desc, 
+	TSsource= (if("yahoo" == con@dbname) "yahoo" 
+	      else if("FRED" == con@dbname) "Federal Reserve Bank of St. Louis"
+	      else "unspecified" )
+	) 
     mat
     } 
     )
@@ -169,3 +167,8 @@ setMethod("TSlabel",   signature(x="character", con="TSgetSymbolConnection"),
    definition= function(x, con=getOption("TSconnection"), ...)
         "TSlabel for TSgetSymbol connection not supported." )
 
+setMethod("TSsource",   signature(x="character", con="TSgetSymbolConnection"),
+   definition= function(x, con=getOption("TSconnection"), ...)
+        if("yahoo" == con@dbname) "yahoo" 
+	      else if("FRED" == con@dbname) "Federal Reserve Bank of St. Louis"
+	      else "unspecified"  )

@@ -5,12 +5,13 @@
 \begin{document}
 \maketitle
 %\VignetteIndexEntry{TSgetSymbol Guide}
-\SweaveOpts{eval=TRUE,echo=TRUE,results=hide,fig=FALSE}
-%\SweaveOpts{eval=TRUE,echo=TRUE,results=verbatim,fig=TRUE}
-\begin{Scode}{echo=FALSE,results=hide}
+%\SweaveOpts{eval=TRUE,echo=TRUE,results=hide,fig=FALSE}
+\SweaveOpts{eval=TRUE,echo=TRUE,results=verbatim,fig=TRUE}
+%
+\begin{Scode}{echo=FALSE,results=hide,fig=FALSE}
  options(continue="  ")
 \end{Scode}
-
+%
 \section{Introduction}
 The code from the vignette that generates this guide can 
 be loaded into an editor with \emph{edit(vignette("TSgetSymbol"))}.
@@ -20,7 +21,7 @@ package with \emph{print(vignette("TSgetSymbol"))}.
 
 Once R is started, the functions in this package are made available with
 
-\begin{Scode}
+\begin{Scode}{fig=FALSE}
 library("TSgetSymbol")  
 \end{Scode}
 This will also load required packages \pkg{TSdbi}, \pkg{DBI}, 
@@ -33,10 +34,14 @@ extra functionality, only an interface that is consistent with \pkg{TSdbi}.
 
 \subsection{Examples  Using TSgetSymbol with FRED}
 
-\begin{Scode}{results=verbatim}
+A connection can be used to get data from the Federal Reserve Bank of St.Louis. (Look at http://research.stlouisfed.org/fred2/ to find series identifiers.)
+
+\begin{Scode}
   con <- TSconnect("getSymbol", dbname="FRED") 
   x <- TSget("M2", con)
   plot(x)
+\end{Scode}
+\begin{Scode}
   tfplot(x)
   TSrefperiod(x) 
   TSdescription(x) 
@@ -44,37 +49,54 @@ extra functionality, only an interface that is consistent with \pkg{TSdbi}.
 
 It is also possible to specify a connection to be used as the default:
 
-\begin{Scode}{results=verbatim}
+\begin{Scode}
   options(TSconnection=con)
-  tfplot(TSget(serIDs="M2"))
+  tfOnePlot(percentChange(TSget(serIDs="M2"), lag=52), 
+    Title = "Running commentary, blah, blah, blah", 
+    subtitle="Broad Money (M2)",
+    ylab= "y/y percent change*",
+    source="Source: Federal Reserve Bank of St.Louis (M2)",
+    footnoteLeft = "seasonally adjusted data",
+    footnoteRight = "* approximated by 52 week growth",
+    lastObs = TRUE )
 \end{Scode}
 
-\begin{Scode}{results=verbatim}
-  x2 <- TSget("CPIAUCNS", con)
-  tfplot(x2)
-  plot(x2)
-  TSdescription(x2) 
-\end{Scode}
+It is also possible to return multiple series, but beware that the FRED 
+series called M2 is a weekly series, whereas CPIAUCNS is monthly. Binding
+together series of different frequency may fail, or produce strange results.
 
-\begin{Scode}{results=verbatim}
-  x <- TSget(c("CPIAUCNS","M2"), con)
-  plot(x)
-  tfplot(x)
+\begin{Scode}
+  x <- TSget(c("CPIAUCNS","M2SL"), con)
+  tfplot(x, 
+    Title = "Running commentary, blah, blah, blah", 
+    subtitle=c("Consumer Price Index for All Urban Consumers: All Items", "Broad Money"),
+    ylab= c("Index 1982-84=100", "Billions of dollars"),
+    source= c("Data Source: Federal Reserve Bank of St.Louis (CPIAUCNS)",
+              "Data Source: Federal Reserve Bank of St.Louis (M2SL)"),
+    footnoteLeft  = c("not seasonally adjusted",  "seasonally adjusted"),
+    footnoteRight = paste("Extracted:", date()),
+    lastObs = TRUE )
   TSdescription(x) 
 \end{Scode}
 
-\begin{Scode}{results=verbatim}
-  TSdates(c("CPIAUCNS","M2"), con) # note default start
+
+\begin{Scode}{results=verbatim,fig=FALSE}
+  TSdates(c("CPIAUCNS","M2SL"), con) # note default start
 \end{Scode}
 
 The folowing connects to yahoo and loads Ford. 
 This is a multivariate time series with open, close, etc.
+Set \code{par(ask=TRUE)} here if you want to stop and prompt for <Return>
+between pages in the graphics output.
 
-\begin{Scode}{results=verbatim}
+\begin{Scode}
   yahoo <- TSconnect("getSymbol", dbname="yahoo") 
   x <- TSget("F", con=yahoo)
   plot(x)
-  tfplot(x)
+\end{Scode}
+
+\begin{Scode}
+  tfplot(x, graphs.per.page=3)
 \end{Scode}
 
 See the \pkg{TSdbi} vignette for additional details.
