@@ -1,8 +1,13 @@
 import("methods")  
 import("DBI")      
-import("tframe")
 import("TSdbi")
-#importClassesFrom("DBI",..)
+
+import("tframe")
+import("tframePlus")
+
+import("zoo")
+
+importFrom("quantmod", "getSymbols") #need quantmod in Depends not Imports for some reason
 
 export("getSymbol")
 

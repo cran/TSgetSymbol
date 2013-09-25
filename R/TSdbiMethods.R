@@ -23,7 +23,7 @@ setMethod("TSconnect",   signature(drv="getSymbolDriver", dbname="character"),
    if (is.null(dbname)) stop("dbname must be specified")
    if (dbname == "FRED") {
       #there could be a better test
-      con <- try(quantmod:::getSymbols('CPIAUCNS',src='FRED'), silent = TRUE)
+      con <- try(quantmod::getSymbols('CPIAUCNS',src='FRED'), silent = TRUE)
       if(inherits(con, "try-error")) 
          stop("Could not establish TSgetSymbolConnection to ",  dbname)
       #close(con)
@@ -31,7 +31,7 @@ setMethod("TSconnect",   signature(drv="getSymbolDriver", dbname="character"),
    else if (dbname == "yahoo") {
       #this breaks if the symbol disappears, so it is more trouble than value
       # a better test would be good
-      #con <- try(quantmod:::getSymbols('QQQQ',src='yahoo'), silent = TRUE)
+      #con <- try(quantmod::getSymbols('QQQQ',src='yahoo'), silent = TRUE)
       #if(inherits(con, "try-error")) 
       #   stop("Could not establish TSgetSymbolConnection to ",  dbname)
       ##close(con)
@@ -78,8 +78,7 @@ setMethod("TSdates",
 #trace("TSget", browser, exit=browser, signature = c(serIDs="character", #con="TSgetSymbolConnection"))
 
 setMethod("TSget",     signature(serIDs="character", con="TSgetSymbolConnection"),
-   definition=
-TSget <-   function(serIDs, con, TSrepresentation=options()$TSrepresentation,
+   definition= function(serIDs, con, TSrepresentation=options()$TSrepresentation,
        tf=NULL, start=tfstart(tf), end=tfend(tf),
        names=serIDs, quote = NULL, 
        quiet=TRUE, repeat.try=3, ...){ 
@@ -103,21 +102,19 @@ TSget <-   function(serIDs, con, TSrepresentation=options()$TSrepresentation,
             serIDs <- rep(serIDs, length.out=length(quote))
         }
     
-    #getSymbols BUG workaround. Set this as zoo otherwise periodicity is wrong
-    #   (and frequency does not work either). Then convert below
-    #args <- list(src = con@dbname, return.class="zoo",
-    #             auto.assign=FALSE)
     args <- list(src = con@dbname, return.class=TSrepresentation,
                  auto.assign=FALSE)
     
-    #args <- if (is.null(start) & is.null(end)) append(args, list(...))
-    #        else if (is.null(start)  ) append(args, list(end=end, ...))
-    #        else if (is.null(end)  )   append(args, list(start=start, ...))
-    #        else         append(args, list(start=start, end=end, ...) )
+    if (con@dbname == "yahoo" )
+       args <- if (is.null(start) & is.null(end)) append(args, list(...))
+            else if (is.null(start)  ) append(args, list(to=end, ...))
+            else if (is.null(end)  )   append(args, list(from=start, ...))
+            else         append(args, list(from=start, to=end, ...) )
+
     for (i in seq(length(serIDs))) {
        argsi <- append(list(serIDs[i]),  args)
        for (rpt in seq(repeat.try)) {
-           # quantmod:::getSymbols
+           # quantmod::getSymbols
            r <- try(do.call("getSymbols", argsi), silent=quiet)
 	   if (!inherits(r , "try-error")) break
 	   }
@@ -134,7 +131,7 @@ TSget <-   function(serIDs, con, TSrepresentation=options()$TSrepresentation,
     #if (NCOL(mat) != length(serIDs)) stop("Error retrieving series", serIDs)
     #  yahoo connections return high, low , ... 
     if (NCOL(mat) != length(serIDs)) names <- seriesNames(mat) 
-    # getSymbols BUG workaround
+    
     st <- as.POSIXlt(start(mat)) #POSIXlt as return for zoo
     if (default) {
         if(periodicity(mat)$scale == "monthly")
@@ -145,15 +142,8 @@ TSget <-   function(serIDs, con, TSrepresentation=options()$TSrepresentation,
 	   mat <- ts(mat, frequency=1, start=c(1900+st$year, 1))
 	}
 
-    # BUG in tfwindow when mat is zoo with POSIXct and start is eg"2011-01-03"
-    #   next should work , but does not
-    # mat <- tfwindow(mat, tf=tf, start=start, end=end)
-    if (inherits(mat, "ts"))
-       mat <- tfwindow(mat, tf=tf, start=start, end=end)
-    else if (inherits(mat, "zoo")) {
-       if(!is.null(start)) mat <- window(mat, start=as.POSIXct(start))
-       if(!is.null(end))   mat <- window(mat, end=as.POSIXct(end))
-       }
+    if (con@dbname != "yahoo" )
+        mat <- tfwindow(mat, tf=tf, start=start, end=end)
 
     seriesNames(mat) <- names
     TSmeta(mat) <- new("TSmeta", serIDs=serIDs,  dbname=con@dbname, 
